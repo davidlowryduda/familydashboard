@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Family Dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='htmx.min.js') }}" defer></script>
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token() }}"}'>
+  {% if current_user.is_authenticated %}
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('main.home') }}">🏡 Family</a>
+    <nav class="mainnav">
+      {% for endpoint, label in nav_items %}
+        <a href="{{ url_for(endpoint) }}" class="{{ 'active' if request.endpoint and request.endpoint.split('.')[0] == endpoint.split('.')[0] }}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+    <div class="me">
+      <a href="{{ url_for('auth.account') }}" class="avatar" style="--c: {{ current_user.color }}" title="{{ current_user.display_name }}">{{ current_user.initial }}</a>
+      {% if current_user.is_admin %}<a href="{{ url_for('auth.users') }}" class="muted small">Users</a>{% endif %}
+      <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="link small">Log out</button>
+      </form>
+    </div>
+  </header>
+  {% endif %}
+  <main class="{% block main_class %}container{% endblock %}">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

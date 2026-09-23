@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "familydashboard"
+version = "0.1.0"
+description = "A small self-hosted family dashboard: calendar, todos, message board, lists and recipes."
+requires-python = ">=3.11"
+dependencies = [
+    "Flask>=3.0",
+    "Flask-SQLAlchemy>=3.1",
+    "Flask-Migrate>=4.0",
+    "Flask-Login>=0.6",
+    "Flask-WTF>=1.2",
+    "icalendar>=5.0",
+    "recurring-ical-events>=3.0",
+    "requests>=2.31",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+prod = ["gunicorn>=22"]
+
+[tool.setuptools.packages.find]
+include = ["familydashboard*"]
+
+[tool.setuptools.package-data]
+familydashboard = ["templates/**/*", "static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

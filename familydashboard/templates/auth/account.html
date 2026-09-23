@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}My account{% endblock %}
+{% block content %}
+<h1>My account</h1>
+<div class="grid2">
+  <section class="card">
+    <h2>Profile</h2>
+    <form method="post">
+      {{ csrf() }}
+      <input type="hidden" name="action" value="profile">
+      <label>Display name <input name="display_name" value="{{ current_user.display_name }}" required></label>
+      <fieldset class="swatches">
+        <legend>Color</legend>
+        {% for c in colors %}
+          <label class="swatch" style="--c: {{ c }}"><input type="radio" name="color" value="{{ c }}" {{ 'checked' if c == current_user.color }}><span></span></label>
+        {% endfor %}
+      </fieldset>
+      <button class="primary">Save</button>
+    </form>
+  </section>
+  <section class="card">
+    <h2>Change password</h2>
+    <form method="post">
+      {{ csrf() }}
+      <input type="hidden" name="action" value="password">
+      <label>Current password <input type="password" name="current" autocomplete="current-password" required></label>
+      <label>New password <input type="password" name="new" autocomplete="new-password" minlength="6" required></label>
+      <label>Confirm new password <input type="password" name="confirm" autocomplete="new-password" minlength="6" required></label>
+      <button class="primary">Change password</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Log in · Family Dashboard{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="card login">
+  <h1>🏡 Family Dashboard</h1>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Username <input name="username" value="{{ username or '' }}" autocomplete="username" autocapitalize="none" required autofocus></label>
+    <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+    <label class="check"><input type="checkbox" name="remember" checked> Keep me logged in on this device</label>
+    <button class="primary wide">Log in</button>
+  </form>
+</div>
+{% endblock %}

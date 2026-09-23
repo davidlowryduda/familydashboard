@@ -1,0 +1,7 @@
+{% macro avatar(user, size='') -%}
+  {% if user %}<span class="avatar {{ size }}" style="--c: {{ user.color }}" title="{{ user.display_name }}">{{ user.initial }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro csrf() -%}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}

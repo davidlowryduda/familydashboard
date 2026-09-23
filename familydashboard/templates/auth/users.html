@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar, csrf %}
+{% block title %}Family members{% endblock %}
+{% block content %}
+<h1>Family members</h1>
+<section class="card">
+  <ul class="rows">
+    {% for u in users %}
+    <li class="row">
+      {{ avatar(u) }}
+      <div class="grow">
+        <strong>{{ u.display_name }}</strong> <span class="muted">@{{ u.username }}</span>
+        {% if u.is_admin %}<span class="tag">admin</span>{% endif %}
+      </div>
+      <details class="menu">
+        <summary class="button small">Manage</summary>
+        <div class="menu-body">
+          <form method="post" action="{{ url_for('auth.reset_password', user_id=u.id) }}" class="inline-form">
+            {{ csrf() }}
+            <input type="password" name="password" placeholder="New password" minlength="6" required autocomplete="new-password">
+            <button class="small">Set password</button>
+          </form>
+          {% if u.id != current_user.id %}
+          <form method="post" action="{{ url_for('auth.toggle_admin', user_id=u.id) }}" class="inline">
+            {{ csrf() }}<button class="small">{{ 'Remove admin' if u.is_admin else 'Make admin' }}</button>
+          </form>
+          <form method="post" action="{{ url_for('auth.delete_user', user_id=u.id) }}" class="inline" onsubmit="return confirm('Remove {{ u.display_name }}?')">
+            {{ csrf() }}<button class="small danger">Remove</button>
+          </form>
+          {% endif %}
+        </div>
+      </details>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+<section class="card">
+  <h2>Add a family member</h2>
+  <form method="post" class="stack">
+    {{ csrf() }}
+    <div class="grid2">
+      <label>Username <input name="username" required autocapitalize="none"></label>
+      <label>Display name <input name="display_name" placeholder="e.g. Mom, Sam"></label>
+      <label>Password <input type="password" name="password" minlength="6" required autocomplete="new-password"></label>
+      <label class="check"><input type="checkbox" name="is_admin"> Admin (can manage users)</label>
+    </div>
+    <button class="primary">Add</button>
+  </form>
+</section>
+{% endblock %}
