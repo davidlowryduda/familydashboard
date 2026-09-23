@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Ingredients{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <h1>Ingredients</h1>
+  <a class="button small" href="{{ url_for('recipes.index') }}">← Recipes</a>
+</div>
+<p class="help">The category decides which aisle group an item lands in on shopping lists. New ingredients get a best guess.</p>
+<section class="card">
+  {% for ing in ingredients %}
+  <form method="post" class="inline-form row" id="ing-{{ ing.id }}">
+    {{ csrf() }}<input type="hidden" name="id" value="{{ ing.id }}">
+    <input name="name" value="{{ ing.name }}" required aria-label="Name">
+    <select name="category" aria-label="Category" onchange="this.form.submit()">
+      {% for c in categories %}<option value="{{ c }}" {{ 'selected' if c == ing.category }}>{{ c }}</option>{% endfor %}
+    </select>
+    <button class="small" name="action" value="save">Save</button>
+    <button class="icon" name="action" value="delete" title="Delete" formnovalidate onclick="return confirm('Delete {{ ing.name }}?')">✕</button>
+  </form>
+  {% else %}
+  <p class="empty">Ingredients show up here as you add them to recipes and shopping lists.</p>
+  {% endfor %}
+</section>
+{% endblock %}

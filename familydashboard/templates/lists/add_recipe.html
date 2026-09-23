@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% from "recipes/_tree.html" import tree as render_tree %}
+{% block title %}Add {{ recipe.name }}{% endblock %}
+{% block content %}
+<h1>Add <a href="{{ url_for('recipes.show', recipe_id=recipe.id) }}">{{ recipe.name }}</a> to {{ lst.name }}</h1>
+<form method="get" class="inline-form" style="margin-bottom:1rem">
+  <input type="hidden" name="recipe" value="{{ recipe.id }}">
+  <label class="check">Make
+    <select name="scale" onchange="this.form.submit()">
+      {% for value, label in scales %}<option value="{{ value }}" {{ 'selected' if value|float == scale }}>{{ label }}</option>{% endfor %}
+    </select>
+    {% if recipe.servings %}<span class="muted">({{ (recipe.servings * scale) | qty }} servings)</span>{% endif %}
+  </label>
+  <noscript><button class="small">Update</button></noscript>
+</form>
+<div class="grid2">
+  <section class="card">
+    <h2>Shopping lines</h2>
+    {% if not lines %}<p class="empty">This recipe has no ingredients yet.</p>{% endif %}
+    <form method="post">
+      {{ csrf() }}
+      <input type="hidden" name="recipe" value="{{ recipe.id }}">
+      <input type="hidden" name="scale" value="{{ scale }}">
+      <ul class="rows">
+      {% for line in lines %}
+        {% set key = line.ingredient.id ~ ':' ~ line.unit %}
+        <li class="row">
+          <input type="checkbox" class="checkbox" name="include" value="{{ key }}" id="inc-{{ loop.index }}" {{ 'checked' if not line.optional }}>
+          <label for="inc-{{ loop.index }}" class="grow" style="color:inherit">
+            <span class="qty">{{ line.quantity | amount(line.unit) }}</span>{{ line.ingredient.name }}
+            <div class="meta">
+              {% if line.optional %}<span class="tag">optional</span>{% endif %}
+              {% if (line.ingredient.id, line.unit) in on_list %}<span class="tag">already on list, will add to it</span>{% endif %}
+              {% for path in line.paths if path|length > 1 %}<span>via {{ path[1:] | join(' › ') }}</span>{% endfor %}
+            </div>
+          </label>
+        </li>
+      {% endfor %}
+      </ul>
+      <p class="help">Untick anything you already have at home.</p>
+      <button class="primary" {{ 'disabled' if not lines }}>Add to {{ lst.name }}</button>
+      <a class="button" href="{{ url_for('lists.show', list_id=lst.id) }}">Cancel</a>
+    </form>
+  </section>
+  <section class="card">
+    <h2>Recipe tree</h2>
+    {{ render_tree(tree) }}
+  </section>
+</div>
+{% endblock %}

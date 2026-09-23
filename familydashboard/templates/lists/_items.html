@@ -1,0 +1,37 @@
+{% from "_macros.html" import csrf %}
+<div id="items">
+  {% if list_recipes %}
+  <div class="meta small" style="margin-bottom:.5rem">
+    <span class="muted">Recipes on this list:</span>
+    {% for r in list_recipes %}
+      <span class="tag recipe">
+        <a href="{{ url_for('recipes.show', recipe_id=r.id) }}" style="color:inherit;text-decoration:none">{{ r.name }}</a>
+        <form method="post" action="{{ url_for('lists.remove_recipe', list_id=lst.id, recipe_id=r.id) }}" class="inline"
+              onsubmit="return confirm('Take {{ r.name }} off this list? Its ingredients will be removed (things you added by hand stay).')">
+          {{ csrf() }}<button class="icon" style="padding:0 0 0 .2rem;color:inherit" title="Take this recipe off the list">✕</button>
+        </form>
+      </span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% for group, items in groups %}
+    {% if group %}<h3 class="group-title">{{ group }}</h3>{% endif %}
+    <ul class="rows">
+      {% for item in items %}{% include "lists/_item.html" %}{% endfor %}
+    </ul>
+  {% endfor %}
+  {% if not groups or (groups|length == 1 and not groups[0][1]) %}
+    <p class="empty">{{ 'All done! 🎉' if checked else 'Nothing on this list yet.' }}</p>
+  {% endif %}
+
+  {% if checked %}
+  <div class="toolbar" style="margin: 1.2rem 0 0">
+    <h3 class="group-title grow" style="margin:0">{{ 'In the cart' if lst.is_shopping else 'Done' }} ({{ checked|length }})</h3>
+    <button class="small" hx-post="{{ url_for('lists.clear_checked', list_id=lst.id) }}" hx-target="#items" hx-swap="outerHTML">Clear checked</button>
+  </div>
+  <ul class="rows">
+    {% for item in checked %}{% include "lists/_item.html" %}{% endfor %}
+  </ul>
+  {% endif %}
+</div>

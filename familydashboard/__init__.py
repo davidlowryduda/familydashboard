@@ -38,11 +38,13 @@ def create_app(config_class: type = Config) -> Flask:
         return redirect(url_for("auth.login", next=request.full_path.rstrip("?")))
 
     from .auth.routes import bp as auth_bp
+    from .lists.routes import bp as lists_bp
     from .main.routes import bp as main_bp
     from .messages.routes import bp as messages_bp
+    from .recipes.routes import bp as recipes_bp
     from .todos.routes import bp as todos_bp
 
-    for bp in (auth_bp, main_bp, todos_bp, messages_bp):
+    for bp in (auth_bp, main_bp, todos_bp, messages_bp, lists_bp, recipes_bp):
         app.register_blueprint(bp)
 
     from . import template_helpers

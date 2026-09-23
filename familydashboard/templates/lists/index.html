@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Lists{% endblock %}
+{% block content %}
+<h1>Lists</h1>
+<div class="grid2">
+{% for lst in lists if not lst.archived %}
+  <a class="card" href="{{ url_for('lists.show', list_id=lst.id) }}" style="text-decoration:none;color:inherit;display:block">
+    <h2>{{ '🛒' if lst.is_shopping else '📋' }} {{ lst.name }}</h2>
+    <div class="stat">{{ lst.open_count }} to get{% if lst.items|length > lst.open_count %} · {{ lst.items|length - lst.open_count }} checked{% endif %}</div>
+  </a>
+{% else %}
+  <p class="empty">No lists yet. Make a shopping list to get started.</p>
+{% endfor %}
+</div>
+<section class="card">
+  <h2>New list</h2>
+  <form method="post" action="{{ url_for('lists.create') }}" class="quickadd">
+    {{ csrf() }}
+    <input name="name" placeholder="List name, e.g. Groceries, Hardware store, Packing" required maxlength="100" class="grow">
+    <select name="kind" aria-label="Type">
+      <option value="shopping">Shopping list (with ingredients & recipes)</option>
+      <option value="general">Plain checklist</option>
+    </select>
+    <button class="primary">Create</button>
+  </form>
+</section>
+{% set archived = lists | selectattr('archived') | list %}
+{% if archived %}
+<details>
+  <summary class="muted">Archived lists ({{ archived|length }})</summary>
+  <ul>{% for lst in archived %}<li><a href="{{ url_for('lists.show', list_id=lst.id) }}">{{ lst.name }}</a></li>{% endfor %}</ul>
+</details>
+{% endif %}
+{% endblock %}

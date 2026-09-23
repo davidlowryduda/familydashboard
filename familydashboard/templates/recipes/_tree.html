@@ -1,0 +1,20 @@
+{% macro tree(nodes) -%}
+<ul class="tree">
+  {% for node in nodes %}
+    {% set c = node.component %}
+    {% if node.is_subrecipe %}
+      <li class="sub">
+        <span class="label">{{ node.quantity | qty }}× <a href="{{ url_for('recipes.show', recipe_id=c.subrecipe_id) }}">{{ c.subrecipe.name }}</a></span>
+        {% if c.optional %}<span class="tag">optional</span>{% endif %}
+        {% if c.note %}<span class="muted small">— {{ c.note }}</span>{% endif %}
+        {{ tree(node.children) }}
+      </li>
+    {% else %}
+      <li><strong>{{ node.quantity | amount(c.unit) }}</strong> {{ c.ingredient.name }}
+        {% if c.note %}<span class="muted small">, {{ c.note }}</span>{% endif %}
+        {% if c.optional %}<span class="tag">optional</span>{% endif %}
+      </li>
+    {% endif %}
+  {% endfor %}
+</ul>
+{%- endmacro %}

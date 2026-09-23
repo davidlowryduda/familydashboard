@@ -2,7 +2,7 @@
 
 Revision ID: 0001
 Revises: 
-Create Date: 2026-09-23 02:52:08.064499
+Create Date: 2026-09-23 02:58:22.865945
 
 """
 from alembic import op
@@ -78,6 +78,7 @@ def upgrade():
     sa.Column('checked_at', sa.DateTime(), nullable=True),
     sa.Column('added_by_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('manual', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['added_by_id'], ['user.id'], name=op.f('fk_list_item_added_by_id_user'), ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['ingredient_id'], ['ingredient.id'], name=op.f('fk_list_item_ingredient_id_ingredient'), ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['list_id'], ['list.id'], name=op.f('fk_list_item_list_id_list'), ondelete='CASCADE'),
@@ -143,6 +144,7 @@ def upgrade():
     op.create_table('list_item_recipe',
     sa.Column('item_id', sa.Integer(), nullable=False),
     sa.Column('recipe_id', sa.Integer(), nullable=False),
+    sa.Column('quantity', sa.Float(), nullable=True),
     sa.ForeignKeyConstraint(['item_id'], ['list_item.id'], name=op.f('fk_list_item_recipe_item_id_list_item'), ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['recipe_id'], ['recipe.id'], name=op.f('fk_list_item_recipe_recipe_id_recipe'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('item_id', 'recipe_id', name=op.f('pk_list_item_recipe'))

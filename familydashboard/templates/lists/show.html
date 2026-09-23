@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}{{ lst.name }}{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <h1>{{ '🛒' if lst.is_shopping else '📋' }} {{ lst.name }} {% if lst.archived %}<span class="tag">archived</span>{% endif %}</h1>
+  <details class="menu">
+    <summary class="button small">List settings</summary>
+    <div class="menu-body">
+      <form method="post" action="{{ url_for('lists.update', list_id=lst.id) }}" class="inline-form">
+        {{ csrf() }}<input type="hidden" name="action" value="rename">
+        <input name="name" value="{{ lst.name }}" required maxlength="100"><button class="small">Rename</button>
+      </form>
+      <form method="post" action="{{ url_for('lists.update', list_id=lst.id) }}">
+        {{ csrf() }}<input type="hidden" name="action" value="archive">
+        <button class="small">{{ 'Unarchive' if lst.archived else 'Archive' }}</button>
+      </form>
+      <form method="post" action="{{ url_for('lists.update', list_id=lst.id) }}" onsubmit="return confirm('Delete this list and everything on it?')">
+        {{ csrf() }}<input type="hidden" name="action" value="delete">
+        <button class="small danger">Delete list</button>
+      </form>
+    </div>
+  </details>
+</div>
+
+<section class="card">
+  <form class="quickadd" method="post" action="{{ url_for('lists.add_item', list_id=lst.id) }}"
+        hx-post="{{ url_for('lists.add_item', list_id=lst.id) }}" hx-target="#items" hx-swap="outerHTML"
+        hx-on::after-request="if (event.detail.successful) { this.text.value = ''; this.text.focus(); }">
+    {{ csrf() }}
+    {% if lst.is_shopping %}
+      <input name="text" placeholder="Add an item, e.g. 2 lbs apples" required maxlength="200" autocomplete="off" list="ingredient-names" class="grow">
+      <datalist id="ingredient-names">{% for n in ingredient_names %}<option value="{{ n }}">{% endfor %}</datalist>
+      {% if recipes %}
+      <select name="recipe_id" aria-label="For recipe">
+        <option value="">(not for a recipe)</option>
+        {% for r in recipes %}<option value="{{ r.id }}">for {{ r.name }}</option>{% endfor %}
+      </select>
+      {% endif %}
+    {% else %}
+      <input name="text" placeholder="Add an item…" required maxlength="200" autocomplete="off" class="grow">
+    {% endif %}
+    <button class="primary">Add</button>
+  </form>
+  {% include "lists/_items.html" %}
+</section>
+
+{% if lst.is_shopping %}
+<section class="card">
+  <h2>Add a recipe's ingredients</h2>
+  {% if recipes %}
+  <form method="get" action="{{ url_for('lists.add_recipe', list_id=lst.id) }}" class="quickadd">
+    <input name="recipe" placeholder="Search recipes…" list="recipe-names" required autocomplete="off" class="grow">
+    <datalist id="recipe-names">{% for r in recipes %}<option value="{{ r.name }}">{% endfor %}</datalist>
+    <select name="scale" aria-label="How much">
+      {% for value, label in scales %}<option value="{{ value }}" {{ 'selected' if value == '1' }}>{{ label }}</option>{% endfor %}
+    </select>
+    <button>Preview</button>
+  </form>
+  <p class="help">You'll see every ingredient, sub-recipes included, and can untick what you already have.</p>
+  {% else %}
+  <p class="empty">No recipes yet. <a href="{{ url_for('recipes.new') }}">Add one</a>.</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

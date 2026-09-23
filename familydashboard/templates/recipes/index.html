@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Recipes{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <h1>Recipes</h1>
+  <a class="button small" href="{{ url_for('recipes.ingredients') }}">Ingredients</a>
+  <a class="button primary" href="{{ url_for('recipes.new') }}">New recipe</a>
+</div>
+<form method="get" class="quickadd">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search by recipe or ingredient…" class="grow"
+         hx-get="{{ url_for('recipes.index') }}" hx-trigger="input changed delay:250ms, search" hx-target="#recipe-list" hx-select="#recipe-list" hx-swap="outerHTML" hx-push-url="true">
+  <noscript><button>Search</button></noscript>
+</form>
+<div id="recipe-list" class="grid2">
+  {% for r in recipes %}
+  <a class="card" href="{{ url_for('recipes.show', recipe_id=r.id) }}" style="text-decoration:none;color:inherit;display:block;margin:0">
+    <h2>{{ r.name }}</h2>
+    <div class="stat">
+      {{ r.components | selectattr('ingredient_id') | list | length }} ingredients
+      {% set subs = r.components | selectattr('subrecipe_id') | list %}
+      {% if subs %} · uses {{ subs | map(attribute='subrecipe.name') | join(', ') }}{% endif %}
+      {% if r.servings %} · serves {{ r.servings }}{% endif %}
+    </div>
+  </a>
+  {% else %}
+  <p class="empty">{{ 'No recipes match.' if q else 'No recipes yet.' }}</p>
+  {% endfor %}
+</div>
+{% endblock %}

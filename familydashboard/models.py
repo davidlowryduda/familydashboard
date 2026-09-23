@@ -12,6 +12,51 @@ def normalize_name(name: str) -> str:
     return " ".join(name.strip().lower().split())
 
 
+def name_variants(name: str) -> list[str]:
+    """The name itself first, then likely singular/plural spellings."""
+    variants = [name]
+    if name.endswith("ies"):
+        variants.append(name[:-3] + "y")
+    if name.endswith("oes") or name.endswith("ches") or name.endswith("shes"):
+        variants.append(name[:-2])
+    if name.endswith("s") and not name.endswith("ss"):
+        variants.append(name[:-1])
+    if name.endswith("y"):
+        variants.append(name[:-1] + "ies")
+    if not name.endswith("s"):
+        variants += [name + "s", name + "es"]
+    return list(dict.fromkeys(variants))
+
+
+CATEGORY_KEYWORDS = {
+    "produce": "apple banana lemon lime orange berry berries grape onion garlic potato tomato lettuce spinach carrot "
+               "celery pepper cucumber zucchini broccoli cauliflower mushroom avocado cilantro parsley basil ginger "
+               "kale cabbage scallion shallot squash corn pear peach herbs mint",
+    "meat & fish": "chicken beef pork turkey bacon sausage ham steak salmon tuna shrimp fish lamb ground",
+    "dairy & eggs": "milk butter cheese cheddar mozzarella parmesan yogurt cream egg eggs sour",
+    "bakery": "bread bun buns bagel tortilla tortillas pita roll rolls",
+    "spices": "salt peppercorn cumin paprika oregano cinnamon nutmeg chili thyme rosemary spice seasoning vanilla",
+    "pantry": "flour sugar rice pasta oil vinegar yeast beans lentils oats sauce broth stock honey syrup "
+              "baking soda powder noodles cereal peanut nuts chocolate ketchup mustard mayo",
+    "frozen": "frozen ice",
+    "drinks": "juice coffee tea soda water wine beer",
+    "household": "paper towels soap detergent foil wrap trash bags toothpaste shampoo",
+}
+
+
+def guess_category(name: str) -> str:
+    """Rough first guess for a new ingredient; people can fix it on the Ingredients page."""
+    if "black pepper" in name or "white pepper" in name:
+        return "spices"
+    words = set(name.split())
+    words |= {w[:-1] for w in words if w.endswith("s")} | {w[:-2] for w in words if w.endswith("es")}
+    # Check in an order where more specific groups win ("frozen peas", "chili powder").
+    for category in ("frozen", "household", "spices", "dairy & eggs", "meat & fish", "bakery", "drinks", "produce", "pantry"):
+        if words & set(CATEGORY_KEYWORDS[category].split()):
+            return category
+    return "other"
+
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
@@ -123,11 +168,20 @@ class Ingredient(db.Model):
     ]
 
     @classmethod
+    def find(cls, name: str) -> "Ingredient | None":
+        """Look up by name, tolerating simple plurals ("onions" finds "onion")."""
+        variants = name_variants(normalize_name(name))
+        matches = cls.query.filter(cls.name.in_(variants)).all()
+        if not matches:
+            return None
+        return min(matches, key=lambda i: variants.index(i.name))
+
+    @classmethod
     def get_or_create(cls, name: str, category: str | None = None) -> "Ingredient":
-        norm = normalize_name(name)
-        ing = cls.query.filter_by(name=norm).first()
+        ing = cls.find(name)
         if ing is None:
-            ing = cls(name=norm, category=category or "other")
+            norm = normalize_name(name)
+            ing = cls(name=norm, category=category or guess_category(norm))
             db.session.add(ing)
             db.session.flush()
         return ing
@@ -181,11 +235,21 @@ class RecipeComponent(db.Model):
     subrecipe = db.relationship("Recipe", foreign_keys=[subrecipe_id], back_populates="used_in")
 
 
-list_item_recipe = db.Table(
-    "list_item_recipe",
-    db.Column("item_id", db.Integer, db.ForeignKey("list_item.id", ondelete="CASCADE"), primary_key=True),
-    db.Column("recipe_id", db.Integer, db.ForeignKey("recipe.id", ondelete="CASCADE"), primary_key=True),
-)
+class ListItemRecipe(db.Model):
+    """Links a list item to a recipe it is needed for (the "recipe indication").
+
+    ``quantity`` is how much of the item that recipe contributed, so the recipe
+    can later be taken off the list without disturbing other contributions.
+    """
+
+    __tablename__ = "list_item_recipe"
+
+    item_id = db.Column(db.Integer, db.ForeignKey("list_item.id", ondelete="CASCADE"), primary_key=True)
+    recipe_id = db.Column(db.Integer, db.ForeignKey("recipe.id", ondelete="CASCADE"), primary_key=True)
+    quantity = db.Column(db.Float)
+
+    item = db.relationship("ListItem", back_populates="recipe_links")
+    recipe = db.relationship("Recipe")
 
 
 class List(db.Model):
@@ -225,8 +289,15 @@ class ListItem(db.Model):
 
     list = db.relationship("List", back_populates="items")
     ingredient = db.relationship("Ingredient")
+    # True when someone typed this item in without tagging a recipe.
+    manual = db.Column(db.Boolean, nullable=False, default=False)
+
     added_by = db.relationship("User")
-    recipes = db.relationship("Recipe", secondary=list_item_recipe, order_by="Recipe.name")
+    recipe_links = db.relationship("ListItemRecipe", back_populates="item", cascade="all, delete-orphan")
+
+    @property
+    def recipes(self):
+        return sorted((link.recipe for link in self.recipe_links), key=lambda r: r.name)
 
     @property
     def category(self) -> str:

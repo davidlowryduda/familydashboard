@@ -4,6 +4,7 @@ from flask import abort, request
 from flask_login import current_user
 
 from .models import format_quantity
+from .services.quantities import display_unit
 from .timeutil import humanize, local_today, to_local
 
 
@@ -52,11 +53,19 @@ def _nice_date(d):
     return d.strftime("%b %-d")
 
 
+def _amount(quantity, unit=""):
+    """'2 cups', '½ tsp', '3' or '' for an unspecified amount."""
+    q = format_quantity(quantity)
+    u = display_unit(unit or "", quantity)
+    return " ".join(p for p in (q, u) if p)
+
+
 def register(app):
     app.jinja_env.filters["localtime"] = _localtime
     app.jinja_env.filters["humanize"] = humanize
     app.jinja_env.filters["qty"] = format_quantity
     app.jinja_env.filters["nicedate"] = _nice_date
+    app.jinja_env.filters["amount"] = _amount
 
     @app.context_processor
     def inject():

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% from "recipes/_tree.html" import tree as render_tree %}
+{% block title %}{{ recipe.name }}{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <h1>{{ recipe.name }}</h1>
+  <a class="button small" href="{{ url_for('recipes.edit', recipe_id=recipe.id) }}">Edit details</a>
+  <form method="post" action="{{ url_for('recipes.delete', recipe_id=recipe.id) }}" class="inline" onsubmit="return confirm('Delete {{ recipe.name }}?')">
+    {{ csrf() }}<button class="small danger">Delete</button>
+  </form>
+</div>
+<p class="muted">
+  {% if recipe.servings %}Serves {{ recipe.servings }}.{% endif %}
+  {% if recipe.source_url %}<a href="{{ recipe.source_url }}" target="_blank" rel="noopener noreferrer">Source ↗</a>{% endif %}
+  {% if used_in %}Used in: {% for r in used_in %}<a href="{{ url_for('recipes.show', recipe_id=r.id) }}">{{ r.name }}</a>{{ ', ' if not loop.last }}{% endfor %}{% endif %}
+</p>
+
+{% if shopping_lists and recipe.components %}
+<section class="card">
+  <form method="get" class="inline-form" id="add-to-list-form" action="{{ url_for('lists.add_recipe', list_id=shopping_lists[0].id) }}">
+    <input type="hidden" name="recipe" value="{{ recipe.id }}">
+    <strong>🛒 Add to</strong>
+    <select aria-label="Shopping list" onchange="this.form.action = this.value">
+      {% for l in shopping_lists %}<option value="{{ url_for('lists.add_recipe', list_id=l.id) }}">{{ l.name }}</option>{% endfor %}
+    </select>
+    <select name="scale" aria-label="How much">
+      <option value="0.5">½×</option><option value="1" selected>1×</option><option value="1.5">1½×</option>
+      <option value="2">2×</option><option value="3">3×</option><option value="4">4×</option>
+    </select>
+    <button class="primary">Preview & add</button>
+  </form>
+</section>
+{% endif %}
+
+<div class="grid2">
+  <section class="card" id="components">
+    <h2>Ingredients</h2>
+    {% if recipe.components %}
+    <table class="components">
+      {% for c in recipe.components %}
+      <tr>
+        <td>
+          {% if c.subrecipe %}
+            <strong>{{ (c.quantity if c.quantity is not none else 1) | qty }}×</strong>
+            <a href="{{ url_for('recipes.show', recipe_id=c.subrecipe_id) }}">{{ c.subrecipe.name }}</a> <span class="tag">recipe</span>
+          {% else %}
+            <strong>{{ c.quantity | amount(c.unit) }}</strong> {{ c.ingredient.name }}
+          {% endif %}
+          {% if c.note %}<span class="muted small">, {{ c.note }}</span>{% endif %}
+          {% if c.optional %}<span class="tag">optional</span>{% endif %}
+        </td>
+        <td class="nowrap" style="text-align:right">
+          <form method="post" action="{{ url_for('recipes.move_component', recipe_id=recipe.id, component_id=c.id) }}" class="inline">
+            {{ csrf() }}<input type="hidden" name="direction" value="up"><button class="icon" title="Move up" {{ 'disabled' if loop.first }}>↑</button>
+          </form>
+          <form method="post" action="{{ url_for('recipes.move_component', recipe_id=recipe.id, component_id=c.id) }}" class="inline">
+            {{ csrf() }}<input type="hidden" name="direction" value="down"><button class="icon" title="Move down" {{ 'disabled' if loop.last }}>↓</button>
+          </form>
+          <form method="post" action="{{ url_for('recipes.delete_component', recipe_id=recipe.id, component_id=c.id) }}" class="inline">
+            {{ csrf() }}<button class="icon" title="Remove">✕</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p class="empty">No ingredients yet.</p>
+    {% endif %}
+
+    <h3>Add an ingredient</h3>
+    <form method="post" action="{{ url_for('recipes.add_component', recipe_id=recipe.id) }}" class="inline-form">
+      {{ csrf() }}<input type="hidden" name="kind" value="ingredient">
+      <input name="text" placeholder="e.g. 2 cups flour, sifted" required list="ingredient-names" autocomplete="off" autofocus>
+      <datalist id="ingredient-names">{% for n in ingredient_names %}<option value="{{ n }}">{% endfor %}</datalist>
+      <label class="check small"><input type="checkbox" name="optional"> optional</label>
+      <button class="primary small">Add</button>
+    </form>
+    <p class="help">Type it like a recipe line: amount, unit, ingredient, then an optional note after a comma.</p>
+
+    {% if subrecipe_choices %}
+    <h3>Use another recipe</h3>
+    <form method="post" action="{{ url_for('recipes.add_component', recipe_id=recipe.id) }}" class="inline-form">
+      {{ csrf() }}<input type="hidden" name="kind" value="recipe">
+      <input name="quantity" placeholder="batches (1)" inputmode="decimal" style="max-width:7rem">
+      <select name="subrecipe_id" required>
+        <option value="">Choose a recipe…</option>
+        {% for r in subrecipe_choices %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}
+      </select>
+      <label class="check small"><input type="checkbox" name="optional"> optional</label>
+      <button class="small">Add</button>
+    </form>
+    <p class="help">For example Pizza uses 1 batch of Pizza dough and 1 batch of Tomato sauce. Their ingredients are included when you add Pizza to a shopping list.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    {% if recipe.components | selectattr('subrecipe_id') | list %}
+      <h2>Everything it takes</h2>
+      {{ render_tree(tree) }}
+    {% endif %}
+    {% if recipe.instructions %}<h2>Instructions</h2><div class="instructions">{{ recipe.instructions }}</div>{% endif %}
+    {% if recipe.notes %}<h2>Notes</h2><div class="instructions">{{ recipe.notes }}</div>{% endif %}
+    {% if not recipe.instructions and not recipe.notes and not (recipe.components | selectattr('subrecipe_id') | list) %}
+      <p class="empty">No instructions yet. <a href="{{ url_for('recipes.edit', recipe_id=recipe.id) }}">Add some</a>.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+<li class="row {{ 'done' if item.checked }}">
+  <input type="checkbox" class="checkbox" {{ 'checked' if item.checked }} aria-label="Got it"
+         hx-post="{{ url_for('lists.toggle_item', list_id=lst.id, item_id=item.id) }}" hx-target="#items" hx-swap="outerHTML">
+  <div class="grow">
+    <span class="title">{% if item.quantity is not none or item.unit %}<span class="qty">{{ item.quantity | amount(item.unit) }}</span>{% endif %}{{ item.text }}</span>
+    {% if item.recipe_links %}
+    <div class="meta">{% for r in item.recipes %}<a class="tag recipe" href="{{ url_for('recipes.show', recipe_id=r.id) }}">for {{ r.name }}</a>{% endfor %}</div>
+    {% endif %}
+  </div>
+  <button class="icon" title="Remove" aria-label="Remove"
+          hx-post="{{ url_for('lists.delete_item', list_id=lst.id, item_id=item.id) }}" hx-target="#items" hx-swap="outerHTML">✕</button>
+</li>

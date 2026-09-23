@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}{{ 'Edit ' ~ recipe.name if recipe.id else 'New recipe' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Edit ' ~ recipe.name if recipe.id else 'New recipe' }}</h1>
+<form method="post" class="card">
+  {{ csrf() }}
+  <div class="grid2">
+    <label>Name <input name="name" value="{{ request.form.name or recipe.name or '' }}" required maxlength="200"></label>
+    <label>Servings <input name="servings" type="number" min="1" value="{{ request.form.servings or recipe.servings or '' }}"></label>
+  </div>
+  <label>Source link <input name="source_url" type="url" value="{{ request.form.source_url or recipe.source_url or '' }}" placeholder="https://…"></label>
+  <label>Instructions <textarea name="instructions" rows="8">{{ request.form.instructions or recipe.instructions or '' }}</textarea></label>
+  <label>Notes <textarea name="notes" rows="3" placeholder="Kids like it with extra cheese…">{{ request.form.notes or recipe.notes or '' }}</textarea></label>
+  <button class="primary">{{ 'Save' if recipe.id else 'Create recipe' }}</button>
+  <a class="button" href="{{ url_for('recipes.show', recipe_id=recipe.id) if recipe.id else url_for('recipes.index') }}">Cancel</a>
+</form>
+{% if not recipe.id %}<p class="help">You'll add ingredients (and other recipes it uses) on the next page.</p>{% endif %}
+{% endblock %}
