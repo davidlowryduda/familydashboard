@@ -70,6 +70,7 @@ uv run flask create-user NAME [--name "Display"] [--admin]
 uv run flask reset-password NAME
 uv run flask sync-calendars       # refresh all calendar feeds
 uv run flask seed-demo            # demo data (empty DB only)
+uv run flask backup-db [--dir DIR] [--keep 14]   # online SQLite backup, prunes old copies
 uv run flask db migrate -m "..." && uv run flask db upgrade   # after changing models.py
 uv run pytest                     # run the tests
 uv add PACKAGE                    # add a dependency (updates pyproject.toml and uv.lock)
@@ -102,7 +103,7 @@ Options for later:
 - **Raspberry Pi or home server**: run the gunicorn command above from a systemd unit with `WorkingDirectory` set to the checkout and `EnvironmentFile` pointing at `.env`.
 - **Access away from home**: don't expose it to the internet directly. [Tailscale](https://tailscale.com) (or another VPN) gives every family phone access with zero port forwarding. If you do expose it, serve it over HTTPS behind a reverse proxy and set `BEHIND_PROXY=true` and `SECURE_COOKIES=true`.
 - **Docker**: a slim Python image that runs the gunicorn command above, with `instance/` mounted as a volume so the SQLite file survives upgrades.
-- **Backups**: all data lives in the one SQLite file. `sqlite3 instance/familydashboard.sqlite3 ".backup backup.sqlite3"` is safe to run while the app is up.
+- **Backups**: all data lives in the one SQLite file. `uv run flask backup-db` copies it safely while the app is running, into `instance/backups/`, and keeps the newest 14 copies. Run it from cron, and copy the backups off the server now and then.
 
 ## Project layout
 

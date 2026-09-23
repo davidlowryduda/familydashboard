@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import click
 from flask import Flask
 from loguru import logger
@@ -62,3 +64,18 @@ def register_cli(app: Flask) -> None:
         info = seed_demo()
         logger.info("Seeded demo data")
         click.echo(f"Seeded demo data. Log in as {', '.join(info['users'])} with password {info['password']!r}.")
+
+    @app.cli.command("backup-db")
+    @click.option("--dir", "dest", type=click.Path(file_okay=False, path_type=Path),
+                  help="Where to put backups (default: instance/backups).")
+    @click.option("--keep", default=14, show_default=True, help="How many backups to keep; older ones are deleted.")
+    def backup_db(dest, keep):
+        """Back up the SQLite database (safe while the app is running)."""
+        from .backup import backup
+
+        dest = dest or Path(app.instance_path) / "backups"
+        try:
+            target, pruned = backup(app.config["SQLALCHEMY_DATABASE_URI"], dest, keep)
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
+        logger.info("Backed up database to {} (pruned {} old backups)", target, len(pruned))
