@@ -2,7 +2,7 @@ import click
 from flask import Flask
 
 from .extensions import db
-from .models import USER_COLORS, User
+from .models import USER_COLORS, CalendarFeed, User
 
 
 def register_cli(app: Flask) -> None:
@@ -39,3 +39,12 @@ def register_cli(app: Flask) -> None:
         user.set_password(password)
         db.session.commit()
         click.echo(f"Password updated for {user.username}.")
+
+    @app.cli.command("sync-calendars")
+    def sync_calendars():
+        """Refresh every subscribed calendar feed (run from cron)."""
+        from .services.ics import sync_feed
+
+        for feed in CalendarFeed.query.all():
+            ok = sync_feed(feed)
+            click.echo(f"{'ok  ' if ok else 'FAIL'} {feed.name}" + ("" if ok else f": {feed.last_error}"))

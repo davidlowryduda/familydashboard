@@ -1,0 +1,10 @@
+<div class="toolbar">
+  <h1>{{ heading }}</h1>
+  <nav class="tabs">
+    <a href="{{ url_for('calendar.index') }}" class="{{ 'active' if request.endpoint == 'calendar.index' }}">Month</a>
+    <a href="{{ url_for('calendar.agenda') }}" class="{{ 'active' if request.endpoint == 'calendar.agenda' }}">Agenda</a>
+    <a href="{{ url_for('calendar.feeds') }}" class="{{ 'active' if request.endpoint == 'calendar.feeds' }}">Calendars</a>
+  </nav>
+  <a class="button primary" href="{{ url_for('calendar.new_event') }}">New event</a>
+</div>
+{% if has_stale %}<div hx-post="{{ url_for('calendar.sync_stale') }}" hx-trigger="load" hx-swap="none"></div>{% endif %}

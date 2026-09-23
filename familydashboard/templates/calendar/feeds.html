@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Calendars{% endblock %}
+{% block content %}
+{% with heading = 'Calendars', has_stale = false %}{% include "calendar/_header.html" %}{% endwith %}
+<section class="card">
+  <h2>Connected calendars</h2>
+  <ul class="rows">
+  {% for f in feeds %}
+    <li class="row">
+      <span class="dot" style="--c: {{ f.color }}"></span>
+      <div class="grow">
+        <strong>{{ f.name }}</strong> <span class="muted small">· {{ f.owner.display_name }}</span>
+        <div class="meta feed-status {{ 'err' if f.last_error }}">
+          {% if f.last_error %}⚠ {{ f.last_error[:160] }}{% elif f.last_synced_at %}synced {{ f.last_synced_at | humanize }} · {{ f.events|length }} events{% else %}not synced yet{% endif %}
+        </div>
+      </div>
+      <form method="post" action="{{ url_for('calendar.sync', feed_id=f.id) }}" class="inline">{{ csrf() }}<button class="small">Refresh</button></form>
+      {% if f.owner_id == current_user.id or current_user.is_admin %}
+      <details class="menu">
+        <summary class="button small">⋯</summary>
+        <div class="menu-body">
+          <form method="post" action="{{ url_for('calendar.feed_color', feed_id=f.id) }}" class="swatches">
+            {{ csrf() }}
+            {% for c in colors %}<label class="swatch" style="--c: {{ c }}"><input type="radio" name="color" value="{{ c }}" {{ 'checked' if c == f.color }} onchange="this.form.submit()"><span></span></label>{% endfor %}
+          </form>
+          <form method="post" action="{{ url_for('calendar.delete_feed', feed_id=f.id) }}" onsubmit="return confirm('Remove {{ f.name }}?')">
+            {{ csrf() }}<button class="small danger">Remove calendar</button>
+          </form>
+        </div>
+      </details>
+      {% endif %}
+    </li>
+  {% else %}
+    <li class="empty">No calendars connected yet.</li>
+  {% endfor %}
+  </ul>
+</section>
+<section class="card">
+  <h2>Connect a Google or Outlook calendar</h2>
+  <form method="post">
+    {{ csrf() }}
+    <div class="grid2">
+      <label>Name <input name="name" placeholder="e.g. Dad's work, School" required maxlength="100"></label>
+      <fieldset class="swatches"><legend class="small muted">Color</legend>
+        {% for c in colors %}<label class="swatch" style="--c: {{ c }}"><input type="radio" name="color" value="{{ c }}" {{ 'checked' if loop.index0 == feeds|length % colors|length }}><span></span></label>{% endfor %}
+      </fieldset>
+    </div>
+    <label>Secret iCal / ICS link <input name="ics_url" type="text" inputmode="url" placeholder="https://calendar.google.com/calendar/ical/…/basic.ics" required></label>
+    <button class="primary">Connect</button>
+  </form>
+  <details class="help">
+    <summary>Where do I find the link?</summary>
+    <p><strong>Google Calendar:</strong> on a computer, open Settings, then pick the calendar under "Settings for my calendars" and go to "Integrate calendar". Copy <em>Secret address in iCal format</em>.</p>
+    <p><strong>Outlook / Microsoft 365:</strong> open Settings → Calendar → Shared calendars, then go to "Publish a calendar". Choose the calendar and "Can view all details", press Publish, and copy the <em>ICS</em> link.</p>
+    <p><strong>Apple iCloud:</strong> in the Calendar app, share the calendar as a "Public Calendar" and copy the webcal:// link.</p>
+    <p>These links are read-only: events show up here but can't be edited from the dashboard. They refresh every {{ config.CALENDAR_STALE_MINUTES }} minutes when someone opens the calendar, or whenever you press Refresh. Anyone with a secret link can read that calendar, so only paste it here.</p>
+  </details>
+</section>
+{% endblock %}

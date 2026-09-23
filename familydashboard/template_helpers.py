@@ -1,3 +1,4 @@
+from datetime import timedelta
 from functools import wraps
 
 from flask import abort, request
@@ -66,6 +67,7 @@ def register(app):
     app.jinja_env.filters["qty"] = format_quantity
     app.jinja_env.filters["nicedate"] = _nice_date
     app.jinja_env.filters["amount"] = _amount
+    app.jinja_env.filters["prevday"] = lambda dt: (dt - timedelta(days=1)).strftime("%A, %B %-d")
 
     @app.context_processor
     def inject():

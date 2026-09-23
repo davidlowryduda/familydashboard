@@ -1,0 +1,11 @@
+{% for de in items %}
+<div class="agenda-ev">
+  <span class="when">{{ de.label }}</span>
+  <span class="dot" style="--c: {{ de.event.color }}"></span>
+  <div class="grow">
+    <a href="{{ url_for('calendar.event', event_id=de.event.id) }}">{{ de.event.title }}</a>
+    {% if de.event.location %}<span class="muted small">· {{ de.event.location }}</span>{% endif %}
+    {% if de.event.feed %}<span class="muted small">· {{ de.event.feed.name }}</span>{% endif %}
+  </div>
+</div>
+{% endfor %}

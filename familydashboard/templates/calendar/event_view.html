@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ ev.title }}{% endblock %}
+{% block content %}
+<section class="card">
+  <h1><span class="dot" style="--c: {{ ev.color }}"></span> {{ ev.title }}</h1>
+  <p>
+    {% if ev.all_day %}
+      {{ ev.start.strftime('%A, %B %-d') }}{% if (ev.end - ev.start).days > 1 %} – {{ ev.end | prevday }}{% endif %} · all day
+    {% else %}
+      {{ ev.start | localtime('%A, %B %-d, %-I:%M %p') }} – {{ ev.end | localtime('%-I:%M %p') }}
+    {% endif %}
+  </p>
+  {% if ev.location %}<p>📍 {{ ev.location }}</p>{% endif %}
+  {% if ev.description %}<div class="instructions">{{ ev.description }}</div>{% endif %}
+  <p class="muted small">From the {{ ev.feed.name }} calendar ({{ ev.feed.owner.display_name }}). Change it in Google or Outlook; this copy is read-only.</p>
+  <a class="button" href="{{ url_for('calendar.index', month=ev.start.strftime('%Y-%m')) }}">← Calendar</a>
+</section>
+{% endblock %}

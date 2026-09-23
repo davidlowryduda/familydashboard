@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}{{ 'Edit event' if ev.id else 'New event' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Edit event' if ev.id else 'New event' }}</h1>
+<form method="post" class="card" action="{{ url_for('calendar.event', event_id=ev.id) if ev.id else url_for('calendar.new_event') }}">
+  {{ csrf() }}
+  <label>Title <input name="title" value="{{ request.form.title or ev.title or '' }}" required maxlength="300" autofocus></label>
+  <label class="check"><input type="checkbox" name="all_day" id="all_day" {{ 'checked' if v.all_day }}
+    onchange="document.querySelectorAll('.time-field').forEach(el => el.classList.toggle('hidden', this.checked))"> All day</label>
+  <div class="grid2">
+    <label>Starts <input type="date" name="start_date" value="{{ v.start_date.isoformat() }}" required></label>
+    <label class="time-field {{ 'hidden' if v.all_day }}">at <input type="time" name="start_time" value="{{ v.start_time }}"></label>
+    <label>Ends <input type="date" name="end_date" value="{{ v.end_date.isoformat() }}"></label>
+    <label class="time-field {{ 'hidden' if v.all_day }}">at <input type="time" name="end_time" value="{{ v.end_time }}"></label>
+  </div>
+  <p class="help">Leave the start time empty for an all-day event. With no end time, the event lasts one hour.</p>
+  <label>Where <input name="location" value="{{ request.form.location or ev.location or '' }}" maxlength="300"></label>
+  <label>Notes <textarea name="description">{{ request.form.description or ev.description or '' }}</textarea></label>
+  <button class="primary">Save</button>
+  <a class="button" href="{{ url_for('calendar.index') }}">Cancel</a>
+  {% if ev.id %}<p class="muted small">Added by {{ ev.created_by.display_name if ev.created_by else 'someone' }}.</p>{% endif %}
+</form>
+{% if ev.id %}
+<form method="post" action="{{ url_for('calendar.delete_event', event_id=ev.id) }}" onsubmit="return confirm('Delete this event?')">
+  {{ csrf() }}<button class="small danger">Delete event</button>
+</form>
+{% endif %}
+{% endblock %}

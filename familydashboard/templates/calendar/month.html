@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+{% block content %}
+{% with heading = month.strftime('%B %Y') %}{% include "calendar/_header.html" %}{% endwith %}
+<div class="toolbar" style="margin-top:-.5rem">
+  <a class="button small" href="{{ url_for('calendar.index', month=prev_month.strftime('%Y-%m')) }}">← {{ prev_month.strftime('%b') }}</a>
+  <a class="button small" href="{{ url_for('calendar.index') }}">Today</a>
+  <a class="button small" href="{{ url_for('calendar.index', month=next_month.strftime('%Y-%m')) }}">{{ next_month.strftime('%b') }} →</a>
+</div>
+<div class="month">
+  {% for name in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] %}<div class="dow">{{ name }}</div>{% endfor %}
+  {% for week in weeks %}{% for d in week %}
+    <div class="day {{ 'other' if d.month != month.month }} {{ 'today' if d == today }}">
+      <a class="num" href="{{ url_for('calendar.new_event', date=d.isoformat()) }}" title="Add an event on {{ d.strftime('%b %-d') }}">{{ d.day }}</a>
+      {% for de in days.get(d, []) %}
+        <a class="ev {{ 'allday' if de.label == 'All day' }}" style="--c: {{ de.event.color }}"
+           href="{{ url_for('calendar.event', event_id=de.event.id) }}"
+           title="{{ de.label }} · {{ de.event.title }}{{ ' · ' ~ de.event.feed.name if de.event.feed }}">
+          {% if de.label != 'All day' %}{{ de.label }} {% endif %}{{ de.event.title }}
+        </a>
+      {% endfor %}
+    </div>
+  {% endfor %}{% endfor %}
+</div>
+<p class="help">Tap a day number to add an event. On a phone, the <a href="{{ url_for('calendar.agenda') }}">agenda</a> is easier to read.</p>
+{% endblock %}

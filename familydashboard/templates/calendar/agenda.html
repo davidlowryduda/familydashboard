@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Agenda{% endblock %}
+{% block content %}
+{% with heading = 'Next two weeks' %}{% include "calendar/_header.html" %}{% endwith %}
+<section class="card">
+  {% set ns = namespace(any=false) %}
+  {% for d in dates %}
+    {% set items = days.get(d, []) %}
+    {% if items %}
+      {% set ns.any = true %}
+      <div class="agenda-day">
+        <h3>{{ d | nicedate | capitalize }}{% if (d - today).days > 1 %} · {{ d.strftime('%b %-d') }}{% endif %}</h3>
+        {% include "calendar/_agenda_items.html" %}
+      </div>
+    {% endif %}
+  {% endfor %}
+  {% if not ns.any %}<p class="empty">Nothing scheduled in the next two weeks.</p>{% endif %}
+</section>
+{% endblock %}
