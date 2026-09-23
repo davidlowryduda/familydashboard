@@ -65,3 +65,19 @@ def test_change_password_requires_current(kid_client, kid):
 
 def test_admin_cannot_delete_self(client, parent):
     assert client.post(f"/users/{parent.id}/delete").status_code == 400
+
+
+def test_sqlite_file_uses_wal(tmp_path):
+    from sqlalchemy import text
+
+    from familydashboard import create_app
+    from familydashboard.config import TestConfig
+
+    class FileConfig(TestConfig):
+        SQLALCHEMY_DATABASE_URI = f"sqlite:///{tmp_path / 'wal.sqlite3'}"
+
+    app = create_app(FileConfig)
+    with app.app_context():
+        with db.engine.connect() as conn:
+            assert conn.execute(text("PRAGMA journal_mode")).scalar() == "wal"
+            assert conn.execute(text("PRAGMA busy_timeout")).scalar() == 5000

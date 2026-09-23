@@ -25,4 +25,8 @@ def _sqlite_pragmas(dbapi_connection, connection_record):
     if dbapi_connection.__class__.__module__.startswith("sqlite3"):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
+        # WAL lets readers keep going while a request writes; busy_timeout makes a
+        # writer wait for the lock instead of failing with "database is locked".
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=5000")
         cursor.close()
