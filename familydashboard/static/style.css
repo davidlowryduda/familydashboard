@@ -231,3 +231,6 @@ details.menu .menu-body {
 .widget h2 { display: flex; justify-content: space-between; align-items: baseline; }
 .widget h2 a.more { font-size: .8rem; font-weight: normal; }
 .stat { font-size: .85rem; color: var(--muted); }
+
+/* Hide empty-state hints once a list has content. */
+.rows:has(li) + .empty, #board:has(article) + .empty { display: none; }

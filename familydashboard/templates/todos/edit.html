@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Edit todo{% endblock %}
+{% block content %}
+<h1>Edit todo</h1>
+<form method="post" class="card">
+  {{ csrf() }}
+  <label>Title <input name="title" value="{{ todo.title }}" required maxlength="200"></label>
+  <div class="grid2">
+    <label>Assigned to
+      <select name="assigned_to_id">
+        <option value="">Anyone</option>
+        {% for u in users %}<option value="{{ u.id }}" {{ 'selected' if u.id == todo.assigned_to_id }}>{{ u.display_name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Due <input type="date" name="due_date" value="{{ todo.due_date.isoformat() if todo.due_date else '' }}"></label>
+  </div>
+  <label>Notes <textarea name="notes">{{ todo.notes }}</textarea></label>
+  <p class="muted small">Added by {{ todo.created_by.display_name if todo.created_by else 'someone' }} {{ todo.created_at | humanize }}.</p>
+  <button class="primary">Save</button>
+  <a href="{{ url_for('todos.index') }}" class="button">Cancel</a>
+</form>
+{% endblock %}

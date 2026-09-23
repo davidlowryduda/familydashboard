@@ -1,0 +1,16 @@
+{% from "_macros.html" import avatar %}
+<li class="row {{ 'done' if todo.done }}" id="todo-{{ todo.id }}">
+  <input type="checkbox" class="checkbox" {{ 'checked' if todo.done }} aria-label="Done"
+         hx-post="{{ url_for('todos.toggle', todo_id=todo.id) }}" hx-target="closest li" hx-swap="outerHTML">
+  <div class="grow">
+    <a class="title" href="{{ url_for('todos.edit', todo_id=todo.id) }}" style="color: inherit; text-decoration: none">{{ todo.title }}</a>
+    <div class="meta">
+      {% if todo.due_date %}<span class="tag {{ 'due-over' if todo.due_date < today and not todo.done }}">due {{ todo.due_date | nicedate }}</span>{% endif %}
+      {% if todo.notes %}<span title="{{ todo.notes }}">📝</span>{% endif %}
+      {% if todo.done and todo.done_at %}<span>done {{ todo.done_at | humanize }}</span>{% endif %}
+    </div>
+  </div>
+  {{ avatar(todo.assigned_to, 'sm') }}
+  <button class="icon" title="Delete" aria-label="Delete"
+          hx-post="{{ url_for('todos.delete', todo_id=todo.id) }}" hx-target="closest li" hx-swap="outerHTML">✕</button>
+</li>

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Message board{% endblock %}
+{% block content %}
+<h1>Message board</h1>
+<section class="card">
+  <form method="post" action="{{ url_for('messages.create') }}"
+        hx-post="{{ url_for('messages.create') }}" hx-target="#board" hx-swap="afterbegin"
+        hx-on::after-request="if (event.detail.successful) this.reset()">
+    {{ csrf() }}
+    <label>Post to the whole family
+      <textarea name="body" required maxlength="5000" placeholder="Pick up milk on the way home? Soccer moved to 5pm!"></textarea>
+    </label>
+    <button class="primary">Post</button>
+  </form>
+</section>
+<section class="card">
+  <div id="board">
+    {% for m in messages %}{% include "messages/_message.html" %}{% endfor %}
+  </div>
+  <p class="empty">No messages yet.</p>
+</section>
+{% endblock %}

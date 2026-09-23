@@ -1,0 +1,21 @@
+{% from "_macros.html" import avatar, csrf %}
+<article class="message {{ 'pinned' if m.pinned }}" id="message-{{ m.id }}">
+  {{ avatar(m.author) }}
+  <div class="grow">
+    <div class="small"><strong>{{ m.author.display_name if m.author else 'Former member' }}</strong>
+      <span class="muted" title="{{ m.created_at | localtime }}">· {{ m.created_at | humanize }}</span>
+      {% if m.pinned %}<span class="tag">📌 pinned</span>{% endif %}
+    </div>
+    <div class="body">{{ m.body }}</div>
+  </div>
+  <div class="actions">
+    <form method="post" action="{{ url_for('messages.pin', message_id=m.id) }}" class="inline">
+      {{ csrf() }}<button class="icon" title="{{ 'Unpin' if m.pinned else 'Pin to top' }}">📌</button>
+    </form>
+    {% if m.can_modify(current_user) %}
+      <a class="icon button" style="border:none;background:none" href="{{ url_for('messages.edit', message_id=m.id) }}" title="Edit">✎</a>
+      <button class="icon" title="Delete" hx-post="{{ url_for('messages.delete', message_id=m.id) }}"
+              hx-target="closest article" hx-swap="outerHTML" hx-confirm="Delete this message?">✕</button>
+    {% endif %}
+  </div>
+</article>

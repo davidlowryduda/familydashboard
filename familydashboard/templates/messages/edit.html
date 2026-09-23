@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Edit message{% endblock %}
+{% block content %}
+<h1>Edit message</h1>
+<form method="post" class="card">
+  {{ csrf() }}
+  <label>Message <textarea name="body" required maxlength="5000">{{ m.body }}</textarea></label>
+  <button class="primary">Save</button>
+  <a href="{{ url_for('messages.index') }}" class="button">Cancel</a>
+</form>
+{% endblock %}

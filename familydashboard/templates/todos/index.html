@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Todos{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <h1>Todos</h1>
+  <nav class="tabs">
+    {% for key, label in filters.items() %}
+      <a href="{{ url_for('todos.index', filter=key) }}" class="{{ 'active' if key == current }}">{{ label }}</a>
+    {% endfor %}
+  </nav>
+</div>
+<section class="card">
+  {% if current != 'done' %}
+  <form class="quickadd" method="post" action="{{ url_for('todos.create') }}"
+        hx-post="{{ url_for('todos.create') }}" hx-target="#todo-list" hx-swap="afterbegin"
+        hx-on::after-request="if (event.detail.successful) { this.reset(); this.title.focus(); }">
+    {{ csrf() }}
+    <input name="title" placeholder="Add a todo…" required maxlength="200" autocomplete="off">
+    <select name="assigned_to_id" aria-label="Assign to">
+      <option value="">Anyone</option>
+      {% for u in users %}<option value="{{ u.id }}">{{ u.display_name }}</option>{% endfor %}
+    </select>
+    <input type="date" name="due_date" aria-label="Due date">
+    <button class="primary">Add</button>
+  </form>
+  {% endif %}
+  <ul class="rows" id="todo-list">
+    {% for todo in todos %}{% include "todos/_row.html" %}{% endfor %}
+  </ul>
+  <p class="empty">{{ 'Nothing here. 🎉' if current != 'done' else 'Nothing completed yet.' }}</p>
+</section>
+{% if done_count %}
+<form method="post" action="{{ url_for('todos.clear_done') }}" onsubmit="return confirm('Delete all {{ done_count }} completed todos?')">
+  {{ csrf() }}<button class="small">Clear {{ done_count }} completed</button>
+</form>
+{% endif %}
+{% endblock %}

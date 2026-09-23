@@ -39,9 +39,11 @@ def create_app(config_class: type = Config) -> Flask:
 
     from .auth.routes import bp as auth_bp
     from .main.routes import bp as main_bp
+    from .messages.routes import bp as messages_bp
+    from .todos.routes import bp as todos_bp
 
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(main_bp)
+    for bp in (auth_bp, main_bp, todos_bp, messages_bp):
+        app.register_blueprint(bp)
 
     from . import template_helpers
 
