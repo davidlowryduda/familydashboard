@@ -10,8 +10,7 @@
         {{ tree(node.children) }}
       </li>
     {% else %}
-      <li><strong>{{ node.quantity | amount(c.unit) }}</strong> {{ c.ingredient.name }}
-        {% if c.note %}<span class="muted small">, {{ c.note }}</span>{% endif %}
+      <li><strong>{{ node.quantity | amount(c.unit) }}</strong> {{ c.ingredient.name }}{% if c.note %}<span class="muted small">, {{ c.note }}</span>{% endif %}
         {% if c.optional %}<span class="tag">optional</span>{% endif %}
       </li>
     {% endif %}

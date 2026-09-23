@@ -1,5 +1,58 @@
 {% extends "base.html" %}
+{% from "_macros.html" import csrf %}
 {% block content %}
-<h1>Hi, {{ current_user.display_name }}!</h1>
-<p class="muted">{{ today.strftime('%A, %B %-d') }}</p>
+<div class="toolbar">
+  <h1>Hi, {{ current_user.display_name }}!</h1>
+  <span class="muted">{{ today.strftime('%A, %B %-d') }}</span>
+</div>
+<div class="dash">
+  <section class="card widget">
+    <h2><a href="{{ url_for('calendar.agenda') }}">📅 Today</a> <a class="more" href="{{ url_for('calendar.new_event', date=today.isoformat()) }}">+ event</a></h2>
+    {% set items = today_events %}
+    {% if items %}{% include "calendar/_agenda_items.html" %}{% else %}<p class="empty">Nothing on the calendar today.</p>{% endif %}
+    {% if tomorrow_events %}
+      <h3 class="group-title">Tomorrow</h3>
+      {% set items = tomorrow_events %}{% include "calendar/_agenda_items.html" %}
+    {% endif %}
+  </section>
+
+  <section class="card widget">
+    <h2><a href="{{ url_for('todos.index', filter='mine') }}">✅ My todos</a> <a class="more" href="{{ url_for('todos.index') }}">all todos →</a></h2>
+    <ul class="rows">
+      {% for todo in my_todos %}{% include "todos/_row.html" %}{% endfor %}
+    </ul>
+    <p class="empty">Nothing assigned to you.</p>
+    {% if due_soon %}
+      <h3 class="group-title">Due soon for everyone</h3>
+      <ul class="rows">{% for todo in due_soon %}{% include "todos/_row.html" %}{% endfor %}</ul>
+    {% endif %}
+  </section>
+
+  <section class="card widget">
+    <h2><a href="{{ url_for('messages.index') }}">💬 Board</a> <a class="more" href="{{ url_for('messages.index') }}">all messages →</a></h2>
+    <form method="post" action="{{ url_for('messages.create') }}" class="inline-form" style="margin-bottom:.5rem"
+          hx-post="{{ url_for('messages.create') }}" hx-target="#board" hx-swap="afterbegin"
+          hx-on::after-request="if (event.detail.successful) this.reset()">
+      {{ csrf() }}
+      <input name="body" placeholder="Post a quick note to everyone…" required maxlength="5000" autocomplete="off">
+      <button class="small primary">Post</button>
+    </form>
+    <div id="board">{% for m in messages %}{% include "messages/_message.html" %}{% endfor %}</div>
+    <p class="empty">No messages yet.</p>
+  </section>
+
+  <section class="card widget">
+    <h2><a href="{{ url_for('lists.index') }}">🛒 Lists</a> <a class="more" href="{{ url_for('recipes.index') }}">recipes →</a></h2>
+    <ul class="rows">
+      {% for lst in shopping_lists %}
+      <li class="row">
+        <span>{{ '🛒' if lst.is_shopping else '📋' }}</span>
+        <a class="grow" href="{{ url_for('lists.show', list_id=lst.id) }}" style="color:inherit">{{ lst.name }}</a>
+        <span class="tag">{{ lst.open_count }} to get</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <p class="empty">No lists yet. <a href="{{ url_for('lists.index') }}">Make one</a>.</p>
+  </section>
+</div>
 {% endblock %}

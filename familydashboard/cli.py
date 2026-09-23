@@ -48,3 +48,13 @@ def register_cli(app: Flask) -> None:
         for feed in CalendarFeed.query.all():
             ok = sync_feed(feed)
             click.echo(f"{'ok  ' if ok else 'FAIL'} {feed.name}" + ("" if ok else f": {feed.last_error}"))
+
+    @app.cli.command("seed-demo")
+    def seed_demo_command():
+        """Fill an empty database with a demo family, recipes, lists and events."""
+        from .seed import seed_demo
+
+        if User.query.count():
+            raise click.ClickException("The database already has users; seed-demo only runs on an empty database.")
+        info = seed_demo()
+        click.echo(f"Seeded demo data. Log in as {', '.join(info['users'])} with password {info['password']!r}.")

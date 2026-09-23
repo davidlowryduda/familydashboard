@@ -46,8 +46,8 @@
             <a href="{{ url_for('recipes.show', recipe_id=c.subrecipe_id) }}">{{ c.subrecipe.name }}</a> <span class="tag">recipe</span>
           {% else %}
             <strong>{{ c.quantity | amount(c.unit) }}</strong> {{ c.ingredient.name }}
-          {% endif %}
-          {% if c.note %}<span class="muted small">, {{ c.note }}</span>{% endif %}
+          {%- endif %}
+          {%- if c.note %}<span class="muted small">, {{ c.note }}</span>{% endif %}
           {% if c.optional %}<span class="tag">optional</span>{% endif %}
         </td>
         <td class="nowrap" style="text-align:right">

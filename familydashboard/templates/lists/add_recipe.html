@@ -10,7 +10,7 @@
     <select name="scale" onchange="this.form.submit()">
       {% for value, label in scales %}<option value="{{ value }}" {{ 'selected' if value|float == scale }}>{{ label }}</option>{% endfor %}
     </select>
-    {% if recipe.servings %}<span class="muted">({{ (recipe.servings * scale) | qty }} servings)</span>{% endif %}
+    {% if recipe.servings %}<span class="muted nowrap">({{ (recipe.servings * scale) | qty }} servings)</span>{% endif %}
   </label>
   <noscript><button class="small">Update</button></noscript>
 </form>
