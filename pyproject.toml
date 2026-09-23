@@ -20,8 +20,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
 prod = ["gunicorn>=22"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
 
 [tool.setuptools.packages.find]
 include = ["familydashboard*"]

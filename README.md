@@ -19,13 +19,14 @@ It's built with Flask, SQLite and htmx. There's no JavaScript build step, and it
 
 ## Quick start
 
+The project is managed with [uv](https://docs.astral.sh/uv/). It pins Python in `.python-version` and exact dependency versions in `uv.lock`.
+
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -e '.[dev]'
+uv sync                           # creates .venv with the app and dev tools
 cp .env.example .env              # set SECRET_KEY and FAMILY_TZ
-.venv/bin/flask db upgrade        # creates instance/familydashboard.sqlite3
-.venv/bin/flask create-user mom --name Mom --admin
-.venv/bin/flask run --host 0.0.0.0
+uv run flask db upgrade           # creates instance/familydashboard.sqlite3
+uv run flask create-user mom --name Mom --admin
+uv run flask run --host 0.0.0.0
 ```
 
 Open http://localhost:5000 and log in. Add the rest of the family under **Users** (top right, admins only).
@@ -33,7 +34,7 @@ Open http://localhost:5000 and log in. Add the rest of the family under **Users*
 To try things out with sample data instead, run this on an empty database:
 
 ```bash
-.venv/bin/flask seed-demo         # users mom, dad, sam, alex; password family123
+uv run flask seed-demo            # users mom, dad, sam, alex; password family123
 ```
 
 ## Configuration (`.env`)
@@ -48,13 +49,16 @@ To try things out with sample data instead, run this on an empty database:
 ## Useful commands
 
 ```bash
-flask create-user NAME [--name "Display"] [--admin]
-flask reset-password NAME
-flask sync-calendars              # refresh all calendar feeds
-flask seed-demo                   # demo data (empty DB only)
-flask db migrate -m "..." && flask db upgrade   # after changing models.py
-pytest                            # run the tests
+uv run flask create-user NAME [--name "Display"] [--admin]
+uv run flask reset-password NAME
+uv run flask sync-calendars       # refresh all calendar feeds
+uv run flask seed-demo            # demo data (empty DB only)
+uv run flask db migrate -m "..." && uv run flask db upgrade   # after changing models.py
+uv run pytest                     # run the tests
+uv add PACKAGE                    # add a dependency (updates pyproject.toml and uv.lock)
 ```
+
+`FLASK_APP` is set in the committed `.flaskenv`, so the `flask` commands work without extra setup.
 
 ## Connecting Google / Outlook calendars
 
@@ -64,7 +68,7 @@ On the dashboard, go to **Calendar → Calendars**, and paste the calendar's sec
 - Events refresh in the background when someone opens the calendar and the feed is more than 15 minutes old. You can also press Refresh, or run cron:
 
 ```cron
-*/30 * * * * cd /path/to/familydashboard && .venv/bin/flask sync-calendars >/dev/null
+*/30 * * * * cd /path/to/familydashboard && uv run --no-dev flask sync-calendars
 ```
 
 ## Running it for real
@@ -72,13 +76,13 @@ On the dashboard, go to **Calendar → Calendars**, and paste the calendar's sec
 For anything beyond your laptop, use gunicorn instead of `flask run`:
 
 ```bash
-.venv/bin/pip install -e '.[prod]'
-.venv/bin/gunicorn -w 2 -b 0.0.0.0:8000 "familydashboard:create_app()"
+uv sync --no-dev --extra prod
+uv run --no-dev --extra prod gunicorn -w 2 -b 0.0.0.0:8000 "familydashboard:create_app()"
 ```
 
 Options for later:
 
-- **Raspberry Pi or home server**: run gunicorn from a systemd unit with `WorkingDirectory` set to the checkout and `EnvironmentFile` pointing at `.env`.
+- **Raspberry Pi or home server**: run the gunicorn command above from a systemd unit with `WorkingDirectory` set to the checkout and `EnvironmentFile` pointing at `.env`.
 - **Access away from home**: don't expose it to the internet directly. [Tailscale](https://tailscale.com) (or another VPN) gives every family phone access with zero port forwarding. If you do expose it, put it behind HTTPS (Caddy or nginx), and set `SESSION_COOKIE_SECURE=True` / `REMEMBER_COOKIE_SECURE=True` in `config.py`.
 - **Docker**: a slim Python image that runs the gunicorn command above, with `instance/` mounted as a volume so the SQLite file survives upgrades.
 - **Backups**: all data lives in the one SQLite file. `sqlite3 instance/familydashboard.sqlite3 ".backup backup.sqlite3"` is safe to run while the app is up.
