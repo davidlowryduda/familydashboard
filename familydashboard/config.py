@@ -2,6 +2,10 @@ import os
 from datetime import timedelta
 
 
+def env_flag(name: str, default: bool = False) -> bool:
+    return os.environ.get(name, str(default)).strip().lower() in {"1", "true", "yes", "on"}
+
+
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
     # When unset, create_app() points this at instance/familydashboard.sqlite3.
@@ -17,6 +21,12 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     REMEMBER_COOKIE_SAMESITE = "Lax"
 
+    # Set BEHIND_PROXY when a reverse proxy (e.g. Opalstack's nginx) forwards requests,
+    # so client IPs and https:// URLs come from its X-Forwarded-* headers.
+    BEHIND_PROXY = env_flag("BEHIND_PROXY")
+    # Set SECURE_COOKIES when the site is served over HTTPS so login cookies never go over http.
+    SESSION_COOKIE_SECURE = REMEMBER_COOKIE_SECURE = env_flag("SECURE_COOKIES")
+
     # Calendar feeds older than this are re-fetched when the calendar page is opened.
     CALENDAR_STALE_MINUTES = int(os.environ.get("CALENDAR_STALE_MINUTES", "15"))
     CALENDAR_PAST_DAYS = 30
@@ -31,4 +41,6 @@ class TestConfig(Config):
     WTF_CSRF_ENABLED = False
     LOG_LEVEL = "WARNING"
     LOG_FILE = None
+    BEHIND_PROXY = False
+    SESSION_COOKIE_SECURE = REMEMBER_COOKIE_SECURE = False
     FAMILY_TZ = "America/New_York"

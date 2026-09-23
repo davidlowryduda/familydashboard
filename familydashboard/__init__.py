@@ -3,6 +3,7 @@ import os
 from flask import Flask, redirect, request, url_for
 from flask_login import current_user
 from loguru import logger
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .config import Config
 from .extensions import csrf, db, login_manager, migrate
@@ -20,6 +21,9 @@ def create_app(config_class: type = Config) -> Flask:
         db_path = os.path.join(app.instance_path, "familydashboard.sqlite3")
         app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
     configure_logging(app)
+    if app.config["BEHIND_PROXY"]:
+        # Trust exactly one proxy hop for client IP, scheme and host.
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     if app.config["SECRET_KEY"] == Config.SECRET_KEY and not app.testing:
         logger.warning("SECRET_KEY is the development default; set it in .env before real use")
 

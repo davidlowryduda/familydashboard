@@ -45,6 +45,8 @@ uv run flask seed-demo            # users mom, dad, sam, alex; password family12
 | `FAMILY_TZ` | `America/New_York` | Timezone for displaying and entering times. |
 | `DATABASE_URL` | `instance/familydashboard.sqlite3` | SQLAlchemy URL if you want the DB elsewhere. |
 | `CALENDAR_STALE_MINUTES` | `15` | How old a calendar feed can get before opening the calendar refreshes it. |
+| `BEHIND_PROXY` | `false` | Trust one reverse proxy's `X-Forwarded-For/Proto/Host` headers (real client IPs, https URLs). |
+| `SECURE_COOKIES` | `false` | Send login cookies only over HTTPS. Turn on once the site is served over HTTPS. |
 | `LOG_LEVEL` | `INFO` | Loguru level: `DEBUG`, `INFO`, `WARNING`, ... (`TRACE` also shows SQL). |
 | `LOG_FILE` | unset | Also write logs to this file, rotated at 10 MB with 5 old files kept. |
 
@@ -98,7 +100,7 @@ uv run --no-dev --extra prod gunicorn -w 2 -b 0.0.0.0:8000 "familydashboard:crea
 Options for later:
 
 - **Raspberry Pi or home server**: run the gunicorn command above from a systemd unit with `WorkingDirectory` set to the checkout and `EnvironmentFile` pointing at `.env`.
-- **Access away from home**: don't expose it to the internet directly. [Tailscale](https://tailscale.com) (or another VPN) gives every family phone access with zero port forwarding. If you do expose it, put it behind HTTPS (Caddy or nginx), and set `SESSION_COOKIE_SECURE=True` / `REMEMBER_COOKIE_SECURE=True` in `config.py`.
+- **Access away from home**: don't expose it to the internet directly. [Tailscale](https://tailscale.com) (or another VPN) gives every family phone access with zero port forwarding. If you do expose it, serve it over HTTPS behind a reverse proxy and set `BEHIND_PROXY=true` and `SECURE_COOKIES=true`.
 - **Docker**: a slim Python image that runs the gunicorn command above, with `instance/` mounted as a volume so the SQLite file survives upgrades.
 - **Backups**: all data lives in the one SQLite file. `sqlite3 instance/familydashboard.sqlite3 ".backup backup.sqlite3"` is safe to run while the app is up.
 
