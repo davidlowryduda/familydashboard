@@ -66,3 +66,14 @@ def kid_client(app, kid):
     c = app.test_client()
     login(c, "sam")
     return c
+
+
+@pytest.fixture
+def logs():
+    """Capture loguru messages (pytest's caplog only sees the standard logging module)."""
+    from loguru import logger
+
+    records = []
+    handler_id = logger.add(lambda m: records.append(m.record), level="DEBUG", format="{message}")
+    yield records
+    logger.remove(handler_id)

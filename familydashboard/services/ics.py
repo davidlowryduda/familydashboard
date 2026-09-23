@@ -4,6 +4,7 @@ Each sync downloads the feed, expands recurring events over a window around
 today, and replaces that feed's stored events.
 """
 
+import time as timer
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
@@ -11,6 +12,7 @@ import recurring_ical_events
 import requests
 from flask import current_app
 from icalendar import Calendar
+from loguru import logger
 
 from ..extensions import db
 from ..models import CalendarFeed, Event
@@ -106,11 +108,15 @@ def sync_window() -> tuple[date, date]:
 def sync_feed(feed: CalendarFeed) -> bool:
     """Refresh one feed. Returns True on success; errors are stored on the feed."""
     feed.last_synced_at = utcnow()
+    started = timer.monotonic()
     try:
         parsed = parse(fetch(feed.ics_url), *sync_window())
     except Exception as exc:  # network, HTTP or parse errors all end up on the feed
-        feed.last_error = f"{type(exc).__name__}: {exc}"[:1000]
+        # HTTP errors quote the URL, which contains the feed's secret token.
+        message = str(exc).replace(normalize_url(feed.ics_url), "<feed url>").replace(feed.ics_url, "<feed url>")
+        feed.last_error = f"{type(exc).__name__}: {message}"[:1000]
         db.session.commit()
+        logger.warning("Calendar feed {!r} (id {}) failed to sync: {}", feed.name, feed.id, feed.last_error)
         return False
 
     Event.query.filter_by(feed_id=feed.id).delete()
@@ -121,6 +127,7 @@ def sync_feed(feed: CalendarFeed) -> bool:
         ))
     feed.last_error = None
     db.session.commit()
+    logger.info("Synced calendar feed {!r}: {} events in {:.1f}s", feed.name, len(parsed), timer.monotonic() - started)
     return True
 
 

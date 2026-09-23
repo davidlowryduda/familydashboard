@@ -1,5 +1,6 @@
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user
+from loguru import logger
 from sqlalchemy import func
 
 from ..extensions import db
@@ -154,6 +155,7 @@ def update(list_id):
     elif action == "delete":
         db.session.delete(lst)
         db.session.commit()
+        logger.info("{} deleted list {!r}", current_user.username, lst.name)
         flash(f"Deleted {lst.name}.", "ok")
         return redirect(url_for("lists.index"))
     db.session.commit()
@@ -189,6 +191,7 @@ def add_recipe(list_id):
         excluded = {(line.ingredient.id, line.unit) for line in lines if f"{line.ingredient.id}:{line.unit}" not in included}
         items = add_recipe_to_list(lst, recipe, scale, excluded, include_optional=True, user_id=current_user.id)
         db.session.commit()
+        logger.info("{} added {} ({}x, {} items) to list {!r}", current_user.username, recipe.name, scale, len(items), lst.name)
         flash(f"Added {len(items)} items for {recipe.name}.", "ok")
         return redirect(url_for("lists.show", list_id=lst.id))
 
@@ -205,5 +208,6 @@ def remove_recipe(list_id, recipe_id):
     recipe = db.get_or_404(Recipe, recipe_id)
     deleted = remove_recipe_from_list(lst, recipe)
     db.session.commit()
+    logger.info("{} took {} off list {!r} ({} items removed)", current_user.username, recipe.name, lst.name, deleted)
     flash(f"Took {recipe.name} off the list ({deleted} items removed).", "ok")
     return redirect(url_for("lists.show", list_id=lst.id))

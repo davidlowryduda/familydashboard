@@ -3,6 +3,7 @@ from datetime import date, datetime, time, timedelta
 
 from flask import Blueprint, abort, flash, make_response, redirect, render_template, request, url_for
 from flask_login import current_user
+from loguru import logger
 
 from ..extensions import db
 from ..models import CalendarFeed, Event
@@ -186,6 +187,7 @@ def feeds():
                             color=color if color in FEED_COLORS else FEED_COLORS[0])
         db.session.add(feed)
         db.session.commit()
+        logger.info("{} connected calendar feed {!r}", current_user.username, feed.name)
         if sync_feed(feed):
             flash(f"Added {feed.name} with {len(feed.events)} events.", "ok")
         else:
@@ -210,6 +212,7 @@ def delete_feed(feed_id):
     feed = _get_own_feed(feed_id)
     db.session.delete(feed)
     db.session.commit()
+    logger.info("{} removed calendar feed {!r}", current_user.username, feed.name)
     flash(f"Removed {feed.name}.", "ok")
     return redirect(url_for("calendar.feeds"))
 

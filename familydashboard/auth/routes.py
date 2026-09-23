@@ -2,6 +2,7 @@ from urllib.parse import urlsplit
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
+from loguru import logger
 
 from ..extensions import db
 from ..models import USER_COLORS, User
@@ -28,9 +29,11 @@ def login():
         password = request.form.get("password", "")
         user = User.query.filter_by(username=username).first()
         if user is None or not user.check_password(password):
+            logger.warning("Failed login for {!r} from {}", username, request.remote_addr)
             flash("Wrong username or password.", "error")
             return render_template("auth/login.html", username=username), 401
         login_user(user, remember=bool(request.form.get("remember")))
+        logger.info("{} logged in from {}", user.username, request.remote_addr)
         return redirect(_safe_next(request.args.get("next")))
     return render_template("auth/login.html")
 
@@ -38,6 +41,7 @@ def login():
 @bp.route("/logout", methods=["POST"])
 @login_required
 def logout():
+    logger.info("{} logged out", current_user.username)
     logout_user()
     return redirect(url_for("auth.login"))
 
@@ -57,6 +61,7 @@ def account():
             else:
                 current_user.set_password(request.form["new"])
                 db.session.commit()
+                logger.info("{} changed their password", current_user.username)
                 flash("Password changed.", "ok")
         elif action == "profile":
             name = request.form.get("display_name", "").strip()
@@ -93,6 +98,7 @@ def users():
             user.set_password(password)
             db.session.add(user)
             db.session.commit()
+            logger.info("{} added user {} (admin={})", current_user.username, user.username, user.is_admin)
             flash(f"Added {display_name}.", "ok")
         return redirect(url_for("auth.users"))
     return render_template("auth/users.html", users=User.query.order_by(User.display_name).all())
@@ -108,6 +114,7 @@ def reset_password(user_id):
     else:
         user.set_password(password)
         db.session.commit()
+        logger.info("{} reset the password for {}", current_user.username, user.username)
         flash(f"Password reset for {user.display_name}.", "ok")
     return redirect(url_for("auth.users"))
 
@@ -120,6 +127,7 @@ def toggle_admin(user_id):
         abort(400, "You can't remove your own admin rights.")
     user.is_admin = not user.is_admin
     db.session.commit()
+    logger.info("{} set admin={} for {}", current_user.username, user.is_admin, user.username)
     return redirect(url_for("auth.users"))
 
 
@@ -131,5 +139,6 @@ def delete_user(user_id):
         abort(400, "You can't delete yourself.")
     db.session.delete(user)
     db.session.commit()
+    logger.info("{} removed user {}", current_user.username, user.username)
     flash(f"Removed {user.display_name}.", "ok")
     return redirect(url_for("auth.users"))

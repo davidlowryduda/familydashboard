@@ -1,4 +1,6 @@
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask_login import current_user
+from loguru import logger
 from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 
@@ -102,6 +104,7 @@ def delete(recipe_id):
         return redirect(url_for("recipes.show", recipe_id=recipe.id))
     db.session.delete(recipe)
     db.session.commit()
+    logger.info("{} deleted recipe {!r}", current_user.username, recipe.name)
     flash(f"Deleted {recipe.name}.", "ok")
     return redirect(url_for("recipes.index"))
 

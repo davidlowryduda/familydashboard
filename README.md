@@ -45,6 +45,21 @@ uv run flask seed-demo            # users mom, dad, sam, alex; password family12
 | `FAMILY_TZ` | `America/New_York` | Timezone for displaying and entering times. |
 | `DATABASE_URL` | `instance/familydashboard.sqlite3` | SQLAlchemy URL if you want the DB elsewhere. |
 | `CALENDAR_STALE_MINUTES` | `15` | How old a calendar feed can get before opening the calendar refreshes it. |
+| `LOG_LEVEL` | `INFO` | Loguru level: `DEBUG`, `INFO`, `WARNING`, ... (`TRACE` also shows SQL). |
+| `LOG_FILE` | unset | Also write logs to this file, rotated at 10 MB with 5 old files kept. |
+
+## Logging
+
+Logging uses [loguru](https://github.com/Delgan/loguru). Log messages from Flask, werkzeug, gunicorn and SQLAlchemy are routed through it too, so everything shares one format on stderr (and in `LOG_FILE` if set).
+
+The app logs:
+
+- logins, including failed attempts with the remote address;
+- user management;
+- calendar sync results and timings (secret feed URLs are redacted);
+- recipes added to or removed from lists.
+
+In code, use `from loguru import logger`.
 
 ## Useful commands
 
@@ -93,6 +108,7 @@ Options for later:
 familydashboard/
   __init__.py        app factory; every page requires login except /login
   models.py          all database tables
+  logs.py            loguru setup (routes standard logging into loguru)
   services/          recipe expansion, quantity parsing, ICS sync, calendar queries
   auth/ main/ todos/ messages/ lists/ recipes/ calendar/   one blueprint per area
   templates/ static/ Jinja templates, CSS and vendored htmx

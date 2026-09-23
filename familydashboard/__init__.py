@@ -2,9 +2,11 @@ import os
 
 from flask import Flask, redirect, request, url_for
 from flask_login import current_user
+from loguru import logger
 
 from .config import Config
 from .extensions import csrf, db, login_manager, migrate
+from .logs import configure_logging
 
 # Endpoints reachable without logging in.
 PUBLIC_ENDPOINTS = {"auth.login", "static"}
@@ -17,6 +19,9 @@ def create_app(config_class: type = Config) -> Flask:
         os.makedirs(app.instance_path, exist_ok=True)
         db_path = os.path.join(app.instance_path, "familydashboard.sqlite3")
         app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+    configure_logging(app)
+    if app.config["SECRET_KEY"] == Config.SECRET_KEY and not app.testing:
+        logger.warning("SECRET_KEY is the development default; set it in .env before real use")
 
     db.init_app(app)
     migrate.init_app(app, db, render_as_batch=True)
@@ -55,4 +60,5 @@ def create_app(config_class: type = Config) -> Flask:
     from .cli import register_cli
 
     register_cli(app)
+    logger.debug("App created (database: {})", app.config["SQLALCHEMY_DATABASE_URI"])
     return app

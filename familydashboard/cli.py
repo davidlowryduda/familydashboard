@@ -1,5 +1,6 @@
 import click
 from flask import Flask
+from loguru import logger
 
 from .extensions import db
 from .models import USER_COLORS, CalendarFeed, User
@@ -26,7 +27,7 @@ def register_cli(app: Flask) -> None:
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
-        click.echo(f"Created {'admin ' if admin else ''}user {username}.")
+        logger.info("Created {}user {} from the CLI", "admin " if admin else "", username)
 
     @app.cli.command("reset-password")
     @click.argument("username")
@@ -38,16 +39,18 @@ def register_cli(app: Flask) -> None:
             raise click.ClickException(f"No user {username!r}.")
         user.set_password(password)
         db.session.commit()
-        click.echo(f"Password updated for {user.username}.")
+        logger.info("Reset the password for {} from the CLI", user.username)
 
     @app.cli.command("sync-calendars")
     def sync_calendars():
-        """Refresh every subscribed calendar feed (run from cron)."""
+        """Refresh every subscribed calendar feed (run from cron). Exits 1 if any feed failed."""
         from .services.ics import sync_feed
 
-        for feed in CalendarFeed.query.all():
-            ok = sync_feed(feed)
-            click.echo(f"{'ok  ' if ok else 'FAIL'} {feed.name}" + ("" if ok else f": {feed.last_error}"))
+        feeds = CalendarFeed.query.all()
+        failed = [feed.name for feed in feeds if not sync_feed(feed)]  # each result is logged
+        logger.info("Calendar sync finished: {} ok, {} failed", len(feeds) - len(failed), len(failed))
+        if failed:
+            raise SystemExit(1)
 
     @app.cli.command("seed-demo")
     def seed_demo_command():
@@ -57,4 +60,5 @@ def register_cli(app: Flask) -> None:
         if User.query.count():
             raise click.ClickException("The database already has users; seed-demo only runs on an empty database.")
         info = seed_demo()
+        logger.info("Seeded demo data")
         click.echo(f"Seeded demo data. Log in as {', '.join(info['users'])} with password {info['password']!r}.")

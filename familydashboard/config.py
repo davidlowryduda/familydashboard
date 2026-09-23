@@ -8,6 +8,10 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
     FAMILY_TZ = os.environ.get("FAMILY_TZ", "America/New_York")
 
+    # Loguru level (TRACE, DEBUG, INFO, WARNING, ...). LOG_FILE adds a rotating file sink.
+    LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+    LOG_FILE = os.environ.get("LOG_FILE")
+
     # Shared kitchen tablets stay logged in for a long time when "remember me" is ticked.
     REMEMBER_COOKIE_DURATION = timedelta(days=90)
     SESSION_COOKIE_SAMESITE = "Lax"
@@ -25,4 +29,6 @@ class TestConfig(Config):
     SECRET_KEY = "test"
     SQLALCHEMY_DATABASE_URI = "sqlite://"
     WTF_CSRF_ENABLED = False
+    LOG_LEVEL = "WARNING"
+    LOG_FILE = None
     FAMILY_TZ = "America/New_York"
