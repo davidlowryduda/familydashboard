@@ -6,8 +6,11 @@ def env_flag(name: str, default: bool = False) -> bool:
     return os.environ.get(name, str(default)).strip().lower() in {"1", "true", "yes", "on"}
 
 
+DEV_SECRET_KEY = "dev-only-change-me"
+
+
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
+    SECRET_KEY = os.environ.get("SECRET_KEY", DEV_SECRET_KEY)
     # When unset, create_app() points this at instance/familydashboard.sqlite3.
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
     FAMILY_TZ = os.environ.get("FAMILY_TZ", "America/New_York")

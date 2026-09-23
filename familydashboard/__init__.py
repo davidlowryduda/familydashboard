@@ -5,7 +5,7 @@ from flask_login import current_user
 from loguru import logger
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from .config import Config
+from .config import DEV_SECRET_KEY, Config
 from .extensions import csrf, db, login_manager, migrate
 from .logs import configure_logging
 
@@ -24,7 +24,7 @@ def create_app(config_class: type = Config) -> Flask:
     if app.config["BEHIND_PROXY"]:
         # Trust exactly one proxy hop for client IP, scheme and host.
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
-    if app.config["SECRET_KEY"] == Config.SECRET_KEY and not app.testing:
+    if app.config["SECRET_KEY"] == DEV_SECRET_KEY and not app.testing:
         logger.warning("SECRET_KEY is the development default; set it in .env before real use")
 
     db.init_app(app)

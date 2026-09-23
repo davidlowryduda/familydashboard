@@ -40,3 +40,24 @@ def test_feed_failure_logged_without_secret_url(app, parent, logs):
 def test_standard_logging_is_routed_to_loguru(app, logs):
     logging.getLogger("werkzeug").warning("hello from werkzeug")
     assert "hello from werkzeug" in messages(logs, "WARNING")
+
+
+
+def test_default_secret_key_warning_only_for_default(monkeypatch):
+    import familydashboard
+    from familydashboard.config import DEV_SECRET_KEY, Config, TestConfig
+
+    def warnings_for(key):
+        seen = []
+        monkeypatch.setattr(familydashboard.logger, "warning", lambda msg, *a: seen.append(msg))
+        monkeypatch.setattr(Config, "SECRET_KEY", key)  # as if SECRET_KEY came from .env
+
+        class Cfg(TestConfig):
+            TESTING = False
+            SECRET_KEY = key
+
+        familydashboard.create_app(Cfg)
+        return [m for m in seen if "SECRET_KEY" in m]
+
+    assert warnings_for(DEV_SECRET_KEY)
+    assert not warnings_for("a-real-secret")
