@@ -1,0 +1,26 @@
+#!/bin/bash
+# Start the dashboard under gunicorn unless it's already running.
+# Cron runs this every 10 minutes as a keepalive, following Opalstack's convention.
+source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
+
+if is_running; then
+    echo "Already running (pid $(cat "$PIDFILE"))."
+    exit 0
+fi
+if [ ! -x .venv/bin/gunicorn ]; then
+    echo "No .venv/bin/gunicorn; run deploy/opalstack/update first." >&2
+    exit 1
+fi
+
+.venv/bin/gunicorn --config gunicorn.conf.py --daemon --pid "$PIDFILE" \
+    --error-logfile "$LOG_DIR/gunicorn.log"
+
+for _ in $(seq 20); do
+    if is_running; then
+        echo "Started on 127.0.0.1:$PORT (pid $(cat "$PIDFILE"))."
+        exit 0
+    fi
+    sleep 0.5
+done
+echo "gunicorn did not start; see $LOG_DIR/gunicorn.log and $LOG_FILE" >&2
+exit 1

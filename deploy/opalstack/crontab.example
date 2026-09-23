@@ -1,0 +1,11 @@
+# Add with `crontab -e`. Replace USER with your Opalstack shell user.
+APP=/home/USER/apps/familydashboard
+
+# Keepalive: starts gunicorn if it isn't running (e.g. after a server reboot).
+*/10 * * * * $APP/deploy/opalstack/start > /dev/null 2>&1
+
+# Refresh Google/Outlook calendar feeds.
+*/30 * * * * cd $APP && LOG_FILE=/home/USER/logs/apps/familydashboard/cron.log .venv/bin/flask sync-calendars > /dev/null 2>&1
+
+# Nightly database backup into instance/backups (keeps the newest 14).
+15 3 * * * cd $APP && LOG_FILE=/home/USER/logs/apps/familydashboard/cron.log .venv/bin/flask backup-db --keep 14 > /dev/null 2>&1

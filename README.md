@@ -91,6 +91,9 @@ On the dashboard, go to **Calendar → Calendars**, and paste the calendar's sec
 
 ## Running it for real
 
+**Opalstack:** follow [docs/deploy-opalstack.md](docs/deploy-opalstack.md). The scripts in `deploy/opalstack/` handle start, stop, keep-alive, redeploys and backups.
+
+
 For anything beyond your laptop, use gunicorn instead of `flask run`:
 
 ```bash
@@ -115,6 +118,9 @@ familydashboard/
   services/          recipe expansion, quantity parsing, ICS sync, calendar queries
   auth/ main/ todos/ messages/ lists/ recipes/ calendar/   one blueprint per area
   templates/ static/ Jinja templates, CSS and vendored htmx
+deploy/opalstack/    start/stop/restart/update scripts, .env and crontab templates
+docs/                deployment guide
+gunicorn.conf.py     production server settings (reads .env)
 migrations/          Alembic migrations (flask db ...)
 tests/               pytest suite
 ```

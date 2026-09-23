@@ -70,3 +70,15 @@ def test_backup_db_copies_and_prunes(tmp_path):
 def test_backup_db_refuses_memory_database(app):
     result = app.test_cli_runner().invoke(args=["backup-db"])
     assert result.exit_code != 0 and "file-based SQLite" in result.output
+
+
+def test_gunicorn_config_binds_localhost_port(monkeypatch):
+    import runpy
+    from pathlib import Path
+
+    monkeypatch.setenv("PORT", "12345")
+    monkeypatch.delenv("GUNICORN_BIND", raising=False)
+    cfg = runpy.run_path(str(Path(__file__).parents[1] / "gunicorn.conf.py"))
+    assert cfg["bind"] == "127.0.0.1:12345"
+    assert cfg["wsgi_app"] == "familydashboard:create_app()"
+    assert cfg["workers"] == 1 and cfg["worker_class"] == "gthread"

@@ -1,0 +1,5 @@
+#!/bin/bash
+# Stop and start the dashboard (e.g. after editing .env).
+DIR="$(dirname "${BASH_SOURCE[0]}")"
+"$DIR/stop"
+"$DIR/start"

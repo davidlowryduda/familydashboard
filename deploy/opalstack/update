@@ -1,0 +1,27 @@
+#!/bin/bash
+# Deploy the latest code: pull, install locked dependencies, back up the
+# database, apply migrations, restart. Also used for the first install.
+source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
+
+BRANCH="${DEPLOY_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}"
+echo "==> Pulling $BRANCH"
+git pull --ff-only origin "$BRANCH"
+
+if [ ! -x "$UV" ]; then
+    echo "uv not found at $UV; install it with: curl -LsSf https://astral.sh/uv/install.sh | sh" >&2
+    exit 1
+fi
+echo "==> Installing dependencies from uv.lock"
+"$UV" sync --frozen --no-dev --extra prod
+
+if [ -f instance/familydashboard.sqlite3 ] || [ -n "${DATABASE_URL:-}" ]; then
+    echo "==> Backing up the database"
+    LOG_FILE="$LOG_DIR/cron.log" .venv/bin/flask backup-db || echo "(backup skipped: no database yet)"
+fi
+
+echo "==> Applying migrations"
+LOG_FILE="$LOG_DIR/cron.log" .venv/bin/flask db upgrade
+
+echo "==> Restarting"
+unset LOG_FILE  # let start pick the app log again (from .env or the default)
+"$APP_DIR/deploy/opalstack/restart"
